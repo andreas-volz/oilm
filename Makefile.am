@@ -16,7 +16,8 @@ files_DATA = module.desktop \
 
 EXTRA_DIST = $(files_DATA) \
 	     images/module_icon.png \
-	     fonts/VeraBd.ttf
+	     fonts/VeraBd.ttf \
+	     module.desktop
 
 %.edj:  %.edc
 	$(EDJE_CC) $(EDJE_FLAGS) $< $@
