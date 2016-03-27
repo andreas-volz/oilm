@@ -6,18 +6,17 @@
 /* actual module specifics */
 
 static E_Module *layout_module = NULL;
-static E_Border_Hook *hook = NULL;
+static E_Client_Hook *hook = NULL;
 
 int sort_cb(const void *d1, const void *d2);
 int border_type_to_layer(int type);
 
-static void _e_module_layout_cb_hook(void *data, void *bdv)
+static void _e_module_layout_cb_hook(void *data, E_Client *bd)
 {
   Eina_List *clientList = NULL;
   Eina_List *list = NULL;
   Eina_List *l = NULL;
   int i = 0;
-  E_Border *bd = bdv;
 
   /* FIXME: make some modification based on policy */
   printf("Window:\n"
@@ -26,35 +25,35 @@ static void _e_module_layout_cb_hook(void *data, void *bdv)
          "  Geometry:   %ix%i+%i+%i\n"
          "  New:        %i\n"
          "  NetWM Type: %i\n"
-         , bd->client.icccm.title, bd->client.netwm.name
-         , bd->client.icccm.name, bd->client.icccm.class
+         , bd->icccm.title, bd->netwm.name
+         , bd->icccm.name, bd->icccm.class
          , bd->x, bd->y, bd->w, bd->h
          , bd->new_client
-         , bd->client.netwm.type);
+         , bd->netwm.type);
 
   printf("open centered\n");
-  bd->client.e.state.centered = 1;
-  bd->client.icccm.base_w = 1;
-  bd->client.icccm.base_h = 1;
-  bd->client.icccm.min_w = 1;
-  bd->client.icccm.min_h = 1;
-  bd->client.icccm.max_w = bd->w;
-  bd->client.icccm.max_h = bd->h;
+  bd->e.state.centered = 1;
+  bd->icccm.base_w = 1;
+  bd->icccm.base_h = 1;
+  bd->icccm.min_w = 1;
+  bd->icccm.min_h = 1;
+  bd->icccm.max_w = bd->w;
+  bd->icccm.max_h = bd->h;
 
-  clientList = e_border_client_list();
+  clientList = e_client_focus_stack_get();
 
   printf("num: %d\n", eina_list_count(clientList));
-  printf("Current window type: %d\n", bd->client.netwm.type);
+  printf("Current window type: %d\n", bd->netwm.type);
 
-  for (l = e_border_client_list(); l; l = l->next)
+  for (l = e_client_focus_stack_get(); l; l = l->next)
   {
-    E_Border *border = l->data;
+    E_Client *border = l->data;
 
-    printf("before: window type is: %d\n", border->client.netwm.type);
+    printf("before: window type is: %d\n", border->netwm.type);
   }
 
   printf("pre sort\n");
-  clientList = e_border_client_list();
+  clientList = e_client_focus_stack_get();
 
   if (!clientList) printf("!clientList\n");
 
@@ -66,23 +65,23 @@ static void _e_module_layout_cb_hook(void *data, void *bdv)
     exit(-1);
   }*/
 
-  for (l = e_border_client_list(); l; l = l->next)
+  for (l = e_client_focus_stack_get(); l; l = l->next)
   {
-    E_Border *border = l->data;
+    E_Client *border = l->data;
 
-    printf("after: window type is: %d\n", border->client.netwm.type);
+    printf("after: window type is: %d\n", border->netwm.type);
   }
 
-  if ((bd->client.icccm.transient_for != 0) ||
-      (bd->client.netwm.type == ECORE_X_WINDOW_TYPE_NORMAL))
+  if ((bd->icccm.transient_for != 0) ||
+      (bd->netwm.type == ECORE_X_WINDOW_TYPE_NORMAL))
   {
 
   }
-  else if ((bd->client.icccm.transient_for != 0) ||
-           (bd->client.netwm.type == ECORE_X_WINDOW_TYPE_UTILITY))
+  else if ((bd->icccm.transient_for != 0) ||
+           (bd->netwm.type == ECORE_X_WINDOW_TYPE_UTILITY))
   {
-    e_border_unmaximize(bd, E_MAXIMIZE_BOTH);
-    e_border_move(bd, 0, 0);
+    e_client_unmaximize(bd, E_MAXIMIZE_BOTH);
+    //e_client_move(bd, 0, 0);
   }
   /*else
   {
@@ -105,14 +104,14 @@ static void _e_module_layout_cb_hook(void *data, void *bdv)
   }*/
   else
   {
-    e_border_maximize(bd, E_MAXIMIZE_FILL | E_MAXIMIZE_BOTH);
+    e_client_maximize(bd, E_MAXIMIZE_FILL | E_MAXIMIZE_BOTH);
   }
 }
 
 int sort_cb(const void *d1, const void *d2)
 {
-  const E_Border *border1 = d1;
-  const E_Border *border2 = d2;
+  const E_Client *border1 = d1;
+  const E_Client *border2 = d2;
   int layer1 = 0;
   int layer2 = 0;
 
@@ -121,8 +120,8 @@ int sort_cb(const void *d1, const void *d2)
   if (!border1) return(1);
   if (!border2) return(-1);
 
-  layer1 = border_type_to_layer(border1->client.netwm.type);
-  layer2 = border_type_to_layer(border2->client.netwm.type);
+  layer1 = border_type_to_layer(border1->netwm.type);
+  layer2 = border_type_to_layer(border2->netwm.type);
   printf("layer 1: %d, layer 2: %d\n", layer1, layer2);
 
   if (layer1 < layer2)
@@ -217,7 +216,7 @@ e_modapi_init(E_Module *m)
   char buf[4096];
   layout_module = m;
 
-  hook = e_border_hook_add(E_BORDER_HOOK_EVAL_POST_FETCH,
+  hook = e_client_hook_add(E_CLIENT_HOOK_EVAL_POST_FETCH,
                            _e_module_layout_cb_hook, NULL);
 
   /*snprintf(buf, sizeof(buf), "%s/e-module-battery.edj", e_module_dir_get(m));
@@ -234,7 +233,7 @@ e_modapi_shutdown(E_Module *m)
 {
   if (hook)
   {
-    e_border_hook_del(hook);
+    e_client_hook_del(hook);
     hook = NULL;
   }
   layout_module = NULL;

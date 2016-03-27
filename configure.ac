@@ -3,14 +3,14 @@ dnl Process this file with autoconf to produce a configure script.
 # get rid of that stupid cache mechanism
 rm -f config.cache
 
-AC_INIT(oilm, 0.0.1, andreas.volz@tux-style.com)
+AC_INIT(oilm, 0.1, andreas.volz@tux-style.com)
 AC_PREREQ(2.52)
-AC_CONFIG_SRCDIR(configure.ac)
+AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 AC_ISC_POSIX
 
-AM_INIT_AUTOMAKE(1.8)
+AM_INIT_AUTOMAKE
 AM_CONFIG_HEADER(config.h)
 
 AC_PROG_CC
